@@ -7,6 +7,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
@@ -43,26 +44,42 @@ public class MeBankTest {
 				 
 			}
  			double amount=0.0;
+ 			//Var to store list of TxIds under the given time frame.
+ 			List<String> txIds = new ArrayList<String>();
+ 			
 			//Logic to calculate transactions in a specific time period .
 			//Iterating Array list to modify Amount or calculate relative Amount
 			for(CustomerTransactions ct : customertransactions2) {
 				CustomerTransactions ct1=ct;
 				Date createdDate=formatter.parse(ct1.getCreatedAt());
- 				if((ct1.getFromAccountId().replaceAll("\\s","")).equalsIgnoreCase(accountId) && (createdDate.compareTo(fromDateCorrectFormat)>0 && createdDate.compareTo(toDateCorrectFormat)<0) 
- 						&& ct1.getTransactionType().replaceAll("\\s","").equalsIgnoreCase("PAYMENT")) {
+ 				if((ct1.getFromAccountId().replaceAll("\\s","")).equalsIgnoreCase(accountId) 
+ 						&& (createdDate.compareTo(fromDateCorrectFormat)>0 
+ 						&& createdDate.compareTo(toDateCorrectFormat)<0) 
+ 						&& ct1.getTransactionType().replaceAll("\\s","").equalsIgnoreCase("PAYMENT")) 
+ 				{
  					amount-=Double.parseDouble(ct1.getAmount());
  					nunberOfTransactionsIncluded++;
+ 					txIds.add(ct1.getTransactionId());
 				}
- 				if((ct1.getToAccountId().replaceAll("\\s","")).equalsIgnoreCase(accountId) && (createdDate.compareTo(fromDateCorrectFormat)>0 && createdDate.compareTo(toDateCorrectFormat)<0)
- 						&& ct1.getTransactionType().replaceAll("\\s","").equalsIgnoreCase("PAYMENT")) {
+ 				else if((ct1.getToAccountId().replaceAll("\\s","")).equalsIgnoreCase(accountId) 
+ 						&& (createdDate.compareTo(fromDateCorrectFormat)>0 
+ 						&& createdDate.compareTo(toDateCorrectFormat)<0)
+ 						&& ct1.getTransactionType().replaceAll("\\s","").equalsIgnoreCase("PAYMENT")) 
+ 				{
  					amount+=Double.parseDouble(ct1.getAmount());
  					nunberOfTransactionsIncluded++;
+ 					txIds.add(ct1.getTransactionId());
 				}
- 				if((ct1.getFromAccountId().replaceAll("\\s","")).equalsIgnoreCase(accountId) && ct1.getTransactionType().replaceAll("\\s","").equalsIgnoreCase("REVERSAL") && ct1.getRelatedTransaction()!=null) {
-					amount=amount+Double.parseDouble(ct1.getAmount());
-					nunberOfTransactionsIncluded--;
+			}
+			
+			for(CustomerTransactions ct : customertransactions2) {
+				CustomerTransactions ct1=ct;
+				
+ 				if((ct1.getFromAccountId().replaceAll("\\s","")).equalsIgnoreCase(accountId) && ct1.getTransactionType().replaceAll("\\s","").equalsIgnoreCase("REVERSAL") && ct1.getRelatedTransaction()!=null && txIds.contains(ct1.getRelatedTransaction().replaceAll("\\s", ""))) {
+						amount=amount+Double.parseDouble(ct1.getAmount());
+						nunberOfTransactionsIncluded--;
 				}
- 				if((ct1.getToAccountId().replaceAll("\\s","")).equalsIgnoreCase(accountId) && ct1.getTransactionType().replaceAll("\\s","").equalsIgnoreCase("REVERSAL") && ct1.getRelatedTransaction()!=null) {
+ 				else if((ct1.getToAccountId().replaceAll("\\s","")).equalsIgnoreCase(accountId) && ct1.getTransactionType().replaceAll("\\s","").equalsIgnoreCase("REVERSAL") && ct1.getRelatedTransaction()!=null && txIds.contains(ct1.getRelatedTransaction().replaceAll("\\s", ""))) {
 					amount=amount-Double.parseDouble(ct1.getAmount());
 					nunberOfTransactionsIncluded--;
 				}
